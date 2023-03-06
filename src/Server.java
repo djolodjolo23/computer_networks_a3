@@ -3,17 +3,15 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.URL;
-import javax.swing.table.TableRowSorter;
+
 
 public class Server {
 
   public static final int TFTPPORT = 69;
   public static final int BUFSIZE = 516;
-  public static final String READDIR = "./public";
-  public static final String WRITEDIR = "./public";
+  public static final String READDIR = "/read";
+  public static final String WRITEDIR = "/write";
   public static final short OP_RRQ = 1;
   public static final short OP_WRQ = 2;
   public static final short OP_DAT = 3;
@@ -30,8 +28,8 @@ public class Server {
     //argsCheck(args);
     try (DatagramSocket serverSocket = new DatagramSocket(69)) {
       // ready to receive messages
-      byte[] receiveData = new byte[516];
-      byte[] sendData = new byte[516];
+      byte[] receiveData = new byte[BUFSIZE];
+      byte[] sendData = new byte[BUFSIZE];
       System.out.println("Server has successfully started. Listening on the port " + TFTPPORT + "...");
       URL url = Server.class.getResource("Server.class");
       assert url != null;
