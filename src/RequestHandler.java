@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -25,11 +26,12 @@ public class RequestHandler implements Runnable {
 
   private void handleReadRequest(DatagramPacket packet) throws IOException {
     String filename = new String(packet.getData(), 2, packet.getLength() - 2);
-    FileInputStream fileInputStream = new FileInputStream(filename);
+    String name = filename.replace("octet", "");
+    File file = new File("read/demo.txt");
+    FileInputStream fileInputStream = new FileInputStream(file);
     byte[] data = new byte[fileInputStream.available()];
     fileInputStream.read(data);
     fileInputStream.close();
-
     DatagramSocket socket = new DatagramSocket();
     int blockNumber = 1;
     int offset = 0;
@@ -48,24 +50,19 @@ public class RequestHandler implements Runnable {
     }
   }
 
-  private void handleWriteRequest(DatagramPacket request) throws FileNotFoundException, SocketException {
-    // Get the filename from the request
-    String filename = new String(request.getData(), 2, request.getLength() - 2);
-
-    // Open the file for writing
-    FileOutputStream fos = new FileOutputStream(filename);
-
-    // Receive the file from the client in blocks of 512 bytes
-    DatagramSocket socket = new DatagramSocket();
-    int blockNumber = 0;
-  }
   @Override
   public void run() {
     try {
       byte[] buffer = new byte[516];
       DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
+      if (packet.getData()[1] == 1) {
+        handleReadRequest(packet);
+      } else if (packet.getData()[1] == 2) {
+        //handleWriteRequest(packet);
+      }
+      handleReadRequest(receivePacket);
       serverSocket.receive(packet);
-      System.out.println("Received packet from " + packet.getAddress().getHostAddress() + ":" + packet.getPort());
+      System.out.println("Received packet from " + receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
       if (buffer[1] == 1) {
         System.out.println("Read request");
       } else if (buffer[1] == 2) {

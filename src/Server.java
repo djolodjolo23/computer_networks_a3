@@ -42,14 +42,19 @@ public class Server {
         // can accept multiple connections since in while(true) loop
         try {
           //DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-          serverSocket.receive(new DatagramPacket(receiveData, receiveData.length));
+          // connection established
+          // check if all array elements are 0 or not
           DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-          InetAddress IPAddress = receivePacket.getAddress();
-          int port = receivePacket.getPort();
-          RequestHandler requestHandler = new RequestHandler(receivePacket, sendData, serverSocket, IPAddress, port);
-          Thread thread = new Thread(requestHandler);
-          thread.start();
-          thread.join();
+          serverSocket.receive(receivePacket);
+          //if (!isFilledWithZeros(receiveData)) {
+            //serverSocket.receive(new DatagramPacket(receiveData, receiveData.length));
+            InetAddress IPAddress = receivePacket.getAddress();
+            int port = receivePacket.getPort();
+            RequestHandler requestHandler = new RequestHandler(receivePacket, sendData, serverSocket, IPAddress, port);
+            Thread thread = new Thread(requestHandler);
+            thread.start();
+            thread.join();
+            //}
         } catch (IOException | InterruptedException e) {
           throw new RuntimeException(e);
         }
@@ -64,6 +69,15 @@ public class Server {
       System.out.println("Usage: java Server <port> <file>");
       System.exit(1);
     }
+  }
+
+  public static boolean isFilledWithZeros(byte[] array) {
+    for (int i = 0; i < array.length; i++) {
+      if (array[i] != 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private InetSocketAddress receiveFrom(DatagramSocket socket, byte[] buf) {
