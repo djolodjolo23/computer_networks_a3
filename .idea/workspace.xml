@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="More progress done, working on the error codes and timeouts.">
+    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Working on timeout and retransmission.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/RequestHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/RequestHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.java" afterDir="false" />
@@ -54,6 +54,7 @@
     <configuration name="Server" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="Server" />
       <module name="dd222im_assign3" />
+      <option name="PROGRAM_PARAMETERS" value="69 read" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -74,7 +75,7 @@
       <updated>1677829036834</updated>
       <workItem from="1677829038225" duration="1478000" />
       <workItem from="1677830717811" duration="9162000" />
-      <workItem from="1678008911954" duration="27980000" />
+      <workItem from="1678008911954" duration="32725000" />
     </task>
     <task id="LOCAL-00001" summary="Some progress has been done with Starting the server and requesting data.">
       <created>1678020640634</created>
@@ -97,7 +98,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678129203565</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="Working on timeout and retransmission.">
+      <created>1678179356760</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1678179356760</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -118,7 +126,8 @@
     <MESSAGE value="Some progress has been done with Starting the server and requesting data." />
     <MESSAGE value="More progress done, the File class successfully opens the demo.txt file from the read folder." />
     <MESSAGE value="More progress done, working on the error codes and timeouts." />
-    <option name="LAST_COMMIT_MESSAGE" value="More progress done, working on the error codes and timeouts." />
+    <MESSAGE value="Working on timeout and retransmission." />
+    <option name="LAST_COMMIT_MESSAGE" value="Working on timeout and retransmission." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -127,6 +136,21 @@
           <url>file://$PROJECT_DIR$/src/TFTPServer.java</url>
           <line>88</line>
           <option name="timeStamp" value="4" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/RequestHandler.java</url>
+          <line>69</line>
+          <option name="timeStamp" value="66" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/RequestHandler.java</url>
+          <line>50</line>
+          <option name="timeStamp" value="67" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/Server.java</url>
+          <line>43</line>
+          <option name="timeStamp" value="68" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

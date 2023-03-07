@@ -1,31 +1,19 @@
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
+
 
 public class RequestHandler implements Runnable {
 
   private DatagramPacket receivePacket;
-  private DatagramSocket serverSocket;
-  private InetAddress clientIPAddress;
-  private int clientPort;
 
-  private Timer timer;
-  private byte[] sendData;
 
-  public RequestHandler(DatagramPacket receivePacket, byte[] sendData, DatagramSocket serverSocket, InetAddress clientIPAddress, int clientPort) {
+  public RequestHandler(DatagramPacket receivePacket) {
     this.receivePacket = receivePacket;
-    this.sendData = sendData;
-    this.serverSocket = serverSocket;
-    this.clientIPAddress = clientIPAddress;
-    this.clientPort = clientPort;
   }
 
   private void handleReadRequest(DatagramPacket packet) throws IOException {
@@ -44,34 +32,32 @@ public class RequestHandler implements Runnable {
     FileInputStream fileInputStream = new FileInputStream(file);
     byte[] buffer = new byte[516]; // 512 bytes for data + 4 bytes for header
     int blockNumber = 1;
-    int bytesRead = 0;
-    boolean timeOut = false;
+    int bytesRead;
     while (true) {
       bytesRead = fileInputStream.read(buffer, 4, 512); // read 512 bytes of data
       if (bytesRead == -1) {
         break;
       }
-      buffer[0] = 0;
-      buffer[1] = 3;
-      buffer[2] = (byte) (blockNumber >> 8);
-      buffer[3] = (byte) (blockNumber & 0xFF);
-      DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, packet.getAddress(), packet.getPort());
-      boolean ackReceived = false;
-      int retryCount = 0;
+      buffer[0] = 0; // data packet
+      buffer[1] = 3; // data packet
+      buffer[2] = (byte) (blockNumber >> 8); // block number
+      buffer[3] = (byte) (blockNumber & 0xFF); // block number
+      DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, packet.getAddress(), packet.getPort()); // create packet
+      boolean ackReceived = false; // flag to check if ack is received
+      int retryCount = 0; //
       while (!ackReceived && retryCount < 3) {
         socket.send(response);
         try {
-          // by lowering the timeout, retransmission can be triggered from the debugger
-          socket.setSoTimeout(3);
-          DatagramPacket ackPacket = new DatagramPacket(new byte[4], 4);
-          socket.receive(ackPacket);
+          socket.setSoTimeout(1); // set timeout to 50ms
+          DatagramPacket ackPacket = new DatagramPacket(new byte[4], 4); // create ack packet
+          socket.receive(ackPacket); // receive ack packet
           if (ackPacket.getData()[0] == 0 && ackPacket.getData()[1] == 4 &&
               ackPacket.getData()[2] == buffer[2] && ackPacket.getData()[3] == buffer[3]) {
-            ackReceived = true;
+            ackReceived = true; // ack received
           }
         } catch (SocketTimeoutException e) {
           // timeout occurred, retransmit the packet
-          retryCount++;
+          retryCount++; // increment retry count
         }
       }
       if (!ackReceived) {
@@ -86,27 +72,6 @@ public class RequestHandler implements Runnable {
     fileInputStream.close();
     socket.close();
   }
-
-  /*
-  private void startTimer() {
-    timer = new Timer();
-    timer.schedule(new TimerTask() {
-      @Override
-      public void run() {
-        handleTimeout();
-      }
-    }, 1000);
-  }
-
-  private void stopTimer() {
-    if (timer != null) {
-      timer.cancel();
-      timer = null;
-    }
-  }
-
-   */
-
 
 
 
@@ -139,7 +104,7 @@ public class RequestHandler implements Runnable {
         //handleWriteRequest(packet);
       }
       //handleReadRequest(receivePacket);
-      serverSocket.receive(receivePacket);
+      //serverSocket.receive(receivePacket);
       System.out.println("Received packet from " + receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
     } catch (IOException e) {
       e.printStackTrace();
