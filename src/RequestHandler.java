@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -39,34 +40,51 @@ public class RequestHandler implements Runnable {
       sendErrorPacket(packet, Server.ERR_FNF, "File not found");
       return;
     }
-    FileInputStream fileInputStream = new FileInputStream(file);
-    byte[] data = new byte[fileInputStream.available()];
-    fileInputStream.read(data);
-    fileInputStream.close();
     DatagramSocket socket = new DatagramSocket();
+    FileInputStream fileInputStream = new FileInputStream(file);
+    byte[] buffer = new byte[516]; // 512 bytes for data + 4 bytes for header
     int blockNumber = 1;
-    int offset = 0;
-    int retries = 0;
+    int bytesRead = 0;
     boolean timeOut = false;
-    while (offset < data.length) {
-      int length = Math.min(512, data.length - offset);
-      byte[] buffer = new byte[length + 4];
+    while (true) {
+      bytesRead = fileInputStream.read(buffer, 4, 512); // read 512 bytes of data
+      if (bytesRead == -1) {
+        break;
+      }
       buffer[0] = 0;
       buffer[1] = 3;
       buffer[2] = (byte) (blockNumber >> 8);
       buffer[3] = (byte) (blockNumber & 0xFF);
-      System.arraycopy(data, offset, buffer, 4, length);
-      DatagramPacket response = new DatagramPacket(buffer, buffer.length, packet.getAddress(), packet.getPort());
+      DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, packet.getAddress(), packet.getPort());
       boolean ackReceived = false;
-      int retryCount = 2;
-      while (!ackReceived && retryCount > 0) {
+      int retryCount = 0;
+      while (!ackReceived && retryCount < 3) {
         socket.send(response);
-        //startTimer();
+        try {
+          // by lowering the timeout, retransmission can be triggered from the debugger
+          socket.setSoTimeout(3);
+          DatagramPacket ackPacket = new DatagramPacket(new byte[4], 4);
+          socket.receive(ackPacket);
+          if (ackPacket.getData()[0] == 0 && ackPacket.getData()[1] == 4 &&
+              ackPacket.getData()[2] == buffer[2] && ackPacket.getData()[3] == buffer[3]) {
+            ackReceived = true;
+          }
+        } catch (SocketTimeoutException e) {
+          // timeout occurred, retransmit the packet
+          retryCount++;
+        }
       }
-      socket.send(response);
-      offset += length;
+      if (!ackReceived) {
+        // max retries reached, send error packet and return
+        sendErrorPacket(packet, 3, "Timeout occurred during transfer");
+        fileInputStream.close();
+        socket.close();
+        return;
+      }
       blockNumber++;
     }
+    fileInputStream.close();
+    socket.close();
   }
 
   /*

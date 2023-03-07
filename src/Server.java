@@ -10,8 +10,8 @@ public class Server {
 
   public static final int TFTPPORT = 69;
   public static final int BUFSIZE = 516;
-  public static final String READDIR = "/read";
-  public static final String WRITEDIR = "/write";
+  public static final String READDIR = "read/";
+  public static final String WRITEDIR = "/write/";
   public static final short OP_RRQ = 1;
   public static final short OP_WRQ = 2;
   public static final short OP_DAT = 3;
