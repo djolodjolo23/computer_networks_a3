@@ -1,8 +1,10 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 
@@ -17,6 +19,7 @@ public class RequestHandler implements Runnable {
   }
 
   private void handleReadRequest(DatagramPacket packet) throws IOException {
+    DatagramSocket socket = new DatagramSocket();
     String filename = new String(packet.getData(), 2, packet.getLength() - 2);
     // removing the null bytes
     int nullIndex = filename.indexOf('\0');
@@ -28,8 +31,9 @@ public class RequestHandler implements Runnable {
       sendErrorPacket(packet, Server.ERR_FNF, "File not found");
       return;
     }
-    DatagramSocket socket = new DatagramSocket();
     FileInputStream fileInputStream = new FileInputStream(file);
+    //fileInputStream.read();
+    //fileInputStream.close();
     byte[] buffer = new byte[516]; // 512 bytes for data + 4 bytes for header
     int blockNumber = 1;
     int bytesRead;
@@ -45,7 +49,7 @@ public class RequestHandler implements Runnable {
       DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, packet.getAddress(), packet.getPort()); // create packet
       boolean ackReceived = false; // flag to check if ack is received
       int retryCount = 0; //
-      while (!ackReceived && retryCount < 3) {
+      while (!ackReceived && retryCount < 6) {
         socket.send(response);
         try {
           socket.setSoTimeout(1); // set timeout to 50ms
@@ -57,19 +61,74 @@ public class RequestHandler implements Runnable {
           }
         } catch (SocketTimeoutException e) {
           // timeout occurred, retransmit the packet
+          System.out.println("Timeout occurred, retransmitting packet...");
           retryCount++; // increment retry count
         }
       }
       if (!ackReceived) {
         // max retries reached, send error packet and return
-        sendErrorPacket(packet, 3, "Timeout occurred during transfer");
+        sendErrorPacket(packet, 3, "Timeout occurred during transfer.");
         fileInputStream.close();
         socket.close();
         return;
       }
+      System.out.println("Sending...");
+      System.out.println("Sent block " + blockNumber);
       blockNumber++;
     }
+    System.out.println("File transfer complete.\n");
     fileInputStream.close();
+    socket.close();
+  }
+
+  private void handleWriteRequest(DatagramPacket packet) throws IOException {
+    DatagramSocket socket = new DatagramSocket();
+    String filename = new String(packet.getData(), 2, packet.getLength() - 2);
+    // removing the null bytes
+    int nullIndex = filename.indexOf('\0');
+    if (nullIndex >= 0) {
+      filename = filename.substring(0, nullIndex);
+    }
+    File file = new File(Server.READDIR + filename);
+    if (!file.exists()) {
+      sendErrorPacket(packet, Server.ERR_FNF, "File not found");
+      return;
+    }
+    FileOutputStream fileOutputStream = new FileOutputStream(file);
+    byte[] buffer = new byte[516];// 512 bytes for data + 4 bytes for header
+    buffer[0] = 0; // data packet
+    buffer[1] = 2; // write request
+    buffer[2] = 0; // block number
+    buffer[3] = 0; // block number
+    DatagramPacket response = new DatagramPacket(buffer, 4, packet.getAddress(), packet.getPort()); // create packet
+    //socket.send(response);
+    int blockNumber = 1;
+    boolean lastPacketReceived = false;
+    while (!lastPacketReceived) {
+      socket.send(response);
+      socket.setSoTimeout(1); // set timeout to 50ms
+      DatagramPacket dataPacket = new DatagramPacket(new byte[516], 516);
+      socket.receive(dataPacket);
+      byte[] data = dataPacket.getData();
+      if (data[1] != 3) {
+        sendErrorPacket(packet, 4, "Illegal TFTP operation.");
+        fileOutputStream.close();
+        socket.close();
+        return;
+      }
+      int bytesRead = dataPacket.getLength() - 4;
+      fileOutputStream.write(data, 4, bytesRead);
+      buffer[2] = (byte) (blockNumber >> 8); // block number
+      buffer[3] = (byte) (blockNumber & 0xFF); // block number
+      response.setData(buffer);
+      socket.send(response);
+      if (bytesRead < 512) {
+        lastPacketReceived = true;
+      }
+      blockNumber++;
+    }
+    System.out.println("File transfer complete.\n");
+    fileOutputStream.close();
     socket.close();
   }
 
@@ -100,12 +159,10 @@ public class RequestHandler implements Runnable {
       //DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
       if (opcode == 1) {
         handleReadRequest(receivePacket);
-      } else if (opcode == 2) {
-        //handleWriteRequest(packet);
       }
       //handleReadRequest(receivePacket);
       //serverSocket.receive(receivePacket);
-      System.out.println("Received packet from " + receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
+      //System.out.println("Received packet from " + receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
     } catch (IOException e) {
       e.printStackTrace();
     }

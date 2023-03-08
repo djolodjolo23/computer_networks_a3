@@ -4,8 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Working on timeout and retransmission.">
+    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Retransmission seems to be working fine, added args check method to check the input.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/read/bigDemoFile.txt" beforeDir="false" afterPath="$PROJECT_DIR$/read/bigDemoFile.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/RequestHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/RequestHandler.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.java" afterDir="false" />
     </list>
@@ -50,7 +51,7 @@
     "settings.editor.selected.configurable": "preferences.pluginManager"
   }
 }]]></component>
-  <component name="RunManager">
+  <component name="RunManager" selected="Application.Server">
     <configuration name="Server" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
       <option name="MAIN_CLASS_NAME" value="Server" />
       <module name="dd222im_assign3" />
@@ -59,9 +60,27 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
+    <configuration name="TFTPServer" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="server.TFTPServer" />
+      <module name="dd222im_assign3" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="server.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <list>
+      <item itemvalue="Application.TFTPServer" />
+      <item itemvalue="Application.Server" />
+    </list>
     <recent_temporary>
       <list>
         <item itemvalue="Application.Server" />
+        <item itemvalue="Application.TFTPServer" />
       </list>
     </recent_temporary>
   </component>
@@ -75,7 +94,7 @@
       <updated>1677829036834</updated>
       <workItem from="1677829038225" duration="1478000" />
       <workItem from="1677830717811" duration="9162000" />
-      <workItem from="1678008911954" duration="32725000" />
+      <workItem from="1678008911954" duration="37629000" />
     </task>
     <task id="LOCAL-00001" summary="Some progress has been done with Starting the server and requesting data.">
       <created>1678020640634</created>
@@ -105,7 +124,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678179356760</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="Retransmission seems to be working fine, added args check method to check the input.">
+      <created>1678201216847</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1678201216847</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -127,7 +153,8 @@
     <MESSAGE value="More progress done, the File class successfully opens the demo.txt file from the read folder." />
     <MESSAGE value="More progress done, working on the error codes and timeouts." />
     <MESSAGE value="Working on timeout and retransmission." />
-    <option name="LAST_COMMIT_MESSAGE" value="Working on timeout and retransmission." />
+    <MESSAGE value="Retransmission seems to be working fine, added args check method to check the input." />
+    <option name="LAST_COMMIT_MESSAGE" value="Retransmission seems to be working fine, added args check method to check the input." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -139,18 +166,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/RequestHandler.java</url>
-          <line>69</line>
-          <option name="timeStamp" value="66" />
+          <line>84</line>
+          <option name="timeStamp" value="75" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/RequestHandler.java</url>
-          <line>50</line>
-          <option name="timeStamp" value="67" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/Server.java</url>
-          <line>43</line>
-          <option name="timeStamp" value="68" />
+          <line>33</line>
+          <option name="timeStamp" value="76" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

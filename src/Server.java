@@ -45,12 +45,21 @@ public class Server {
           serverSocket.receive(receivePacket); // receive incoming request
           //if (!isFilledWithZeros(receiveData)) {
             //serverSocket.receive(new DatagramPacket(receiveData, receiveData.length));
-            RequestHandler requestHandler = new RequestHandler(receivePacket);
-            Thread thread = new Thread(requestHandler);
-            thread.start();
-            //serverSocket.receive(receivePacket);
-            //System.out.println("testing, testing" + receivePacket.getAddress());
-            //thread.join();
+          String request = "";
+          if (receivePacket.getData()[1] == 1) {
+            request = "READ";
+          }
+          if (receivePacket.getData()[1] == 2) {
+            request = "WRITE";
+          }
+          System.out.println("Incoming request from " + receivePacket.getAddress() + " on port " + receivePacket.getPort());
+          System.out.println("Request type: " + request);
+          RequestHandler requestHandler = new RequestHandler(receivePacket);
+          Thread thread = new Thread(requestHandler);
+          thread.start();
+          //serverSocket.receive(receivePacket);
+          //System.out.println("testing, testing" + receivePacket.getAddress());
+          //thread.join();
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
