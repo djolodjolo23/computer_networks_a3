@@ -4,11 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Retransmission seems to be working fine, added args check method to check the input.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/read/bigDemoFile.txt" beforeDir="false" afterPath="$PROJECT_DIR$/read/bigDemoFile.txt" afterDir="false" />
+    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Read request seems to be working fine. Working on write request.">
       <change beforePath="$PROJECT_DIR$/src/RequestHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/RequestHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -94,7 +91,7 @@
       <updated>1677829036834</updated>
       <workItem from="1677829038225" duration="1478000" />
       <workItem from="1677830717811" duration="9162000" />
-      <workItem from="1678008911954" duration="37629000" />
+      <workItem from="1678008911954" duration="38045000" />
     </task>
     <task id="LOCAL-00001" summary="Some progress has been done with Starting the server and requesting data.">
       <created>1678020640634</created>
@@ -131,7 +128,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678201216847</updated>
     </task>
-    <option name="localTasksCounter" value="6" />
+    <task id="LOCAL-00006" summary="Read request seems to be working fine. Working on write request.">
+      <created>1678281616113</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1678281616113</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -154,7 +158,8 @@
     <MESSAGE value="More progress done, working on the error codes and timeouts." />
     <MESSAGE value="Working on timeout and retransmission." />
     <MESSAGE value="Retransmission seems to be working fine, added args check method to check the input." />
-    <option name="LAST_COMMIT_MESSAGE" value="Retransmission seems to be working fine, added args check method to check the input." />
+    <MESSAGE value="Read request seems to be working fine. Working on write request." />
+    <option name="LAST_COMMIT_MESSAGE" value="Read request seems to be working fine. Working on write request." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -171,8 +176,8 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/RequestHandler.java</url>
-          <line>33</line>
-          <option name="timeStamp" value="76" />
+          <line>21</line>
+          <option name="timeStamp" value="77" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

@@ -28,7 +28,7 @@ public class RequestHandler implements Runnable {
     }
     File file = new File(Server.READDIR + filename);
     if (!file.exists()) {
-      sendErrorPacket(packet, Server.ERR_FNF, "File not found");
+      sendErrorPacket(socket, packet, Server.ERR_FNF, "File not found");
       return;
     }
     FileInputStream fileInputStream = new FileInputStream(file);
@@ -67,7 +67,7 @@ public class RequestHandler implements Runnable {
       }
       if (!ackReceived) {
         // max retries reached, send error packet and return
-        sendErrorPacket(packet, 3, "Timeout occurred during transfer.");
+        sendErrorPacket(socket, packet, 3, "Timeout occurred during transfer.");
         fileInputStream.close();
         socket.close();
         return;
@@ -91,7 +91,7 @@ public class RequestHandler implements Runnable {
     }
     File file = new File(Server.READDIR + filename);
     if (!file.exists()) {
-      sendErrorPacket(packet, Server.ERR_FNF, "File not found");
+      sendErrorPacket(socket, packet, Server.ERR_FNF, "File not found");
       return;
     }
     FileOutputStream fileOutputStream = new FileOutputStream(file);
@@ -111,7 +111,7 @@ public class RequestHandler implements Runnable {
       socket.receive(dataPacket);
       byte[] data = dataPacket.getData();
       if (data[1] != 3) {
-        sendErrorPacket(packet, 4, "Illegal TFTP operation.");
+        sendErrorPacket(socket, packet, 4, "Illegal TFTP operation.");
         fileOutputStream.close();
         socket.close();
         return;
@@ -134,8 +134,8 @@ public class RequestHandler implements Runnable {
 
 
 
-  private void sendErrorPacket(DatagramPacket packet, int errorCode, String errorMessage) throws IOException {
-    DatagramSocket socket = new DatagramSocket();
+  private void sendErrorPacket(DatagramSocket socket, DatagramPacket packet, int errorCode, String errorMessage) throws IOException {
+    //DatagramSocket socket = new DatagramSocket();
     byte[] errorBuffer = new byte[512];
     errorBuffer[0] = 0;
     errorBuffer[1] = 5;
@@ -160,9 +160,9 @@ public class RequestHandler implements Runnable {
       if (opcode == 1) {
         handleReadRequest(receivePacket);
       }
-      //handleReadRequest(receivePacket);
-      //serverSocket.receive(receivePacket);
-      //System.out.println("Received packet from " + receivePacket.getAddress().getHostAddress() + ":" + receivePacket.getPort());
+      if (opcode == 2) {
+        handleWriteRequest(receivePacket);
+      }
     } catch (IOException e) {
       e.printStackTrace();
     }
