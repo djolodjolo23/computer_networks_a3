@@ -12,6 +12,7 @@ public class Server {
   public static final int TFTPPORT = 69;
   public static final int BUFSIZE = 516;
   public static final String READDIR = "read/";
+  public static final String WRITEDIR = "write/";
 
   public static final short OP_RRQ = 1;
   public static final short OP_WRQ = 2;
@@ -23,6 +24,11 @@ public class Server {
   public static final short ERR_ACCESS = 2;
   public static final short ERR_EXISTS = 6;
   public static String mode = "octet";
+
+  public static final String[] errorCodes = {"Not defined", "File not found.", "Access violation.",
+      "Disk full or allocation exceeded.", "Illegal TFTP operation.",
+      "Unknown transfer ID.", "File already exists.",
+      "No such user."};
 
   public static void main(String[] args) {
     argsCheck(args);
@@ -42,7 +48,8 @@ public class Server {
           // connection established
           // check if all array elements are 0 or not
           DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-          serverSocket.receive(receivePacket); // receive incoming request
+          serverSocket.receive(receivePacket);
+          receivePacket.setLength(receiveData.length);
           //if (!isFilledWithZeros(receiveData)) {
             //serverSocket.receive(new DatagramPacket(receiveData, receiveData.length));
           String request = "";
@@ -54,7 +61,8 @@ public class Server {
           }
           System.out.println("Incoming request from " + receivePacket.getAddress() + " on port " + receivePacket.getPort());
           System.out.println("Request type: " + request);
-          RequestHandler requestHandler = new RequestHandler(receivePacket);
+          InetSocketAddress clientAddress = new InetSocketAddress(receivePacket.getAddress(), receivePacket.getPort());
+          RequestHandler requestHandler = new RequestHandler(receivePacket, clientAddress);
           Thread thread = new Thread(requestHandler);
           thread.start();
           //serverSocket.receive(receivePacket);
@@ -116,24 +124,5 @@ public class Server {
     }
   }
 
-
-  public static boolean isFilledWithZeros(byte[] array) {
-    for (int i = 0; i < array.length; i++) {
-      if (array[i] != 0) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private InetSocketAddress receiveFrom(DatagramSocket socket, byte[] buf) {
-    DatagramPacket receivePacket = new DatagramPacket(buf, buf.length);
-    try {
-      socket.receive(receivePacket);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return new InetSocketAddress(receivePacket.getAddress(),receivePacket.getPort());
-  }
 
 }
