@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Error packets now do not create new sockets.">
-      <change afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
+    <list default="true" id="a05adda7-5266-4bd8-a388-7550031f7535" name="Changes" comment="Reading and writing to a file works, still some refactoring needs to be done.">
+      <change afterPath="$PROJECT_DIR$/src/Helper.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/RequestHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/RequestHandler.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Server.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Server.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,7 +94,7 @@
       <workItem from="1677829038225" duration="1478000" />
       <workItem from="1677830717811" duration="9162000" />
       <workItem from="1678008911954" duration="40069000" />
-      <workItem from="1678365581767" duration="19213000" />
+      <workItem from="1678365581767" duration="23295000" />
     </task>
     <task id="LOCAL-00001" summary="Some progress has been done with Starting the server and requesting data.">
       <created>1678020640634</created>
@@ -146,7 +145,14 @@
       <option name="project" value="LOCAL" />
       <updated>1678281770113</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Reading and writing to a file works, still some refactoring needs to be done.">
+      <created>1678435071857</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1678435071857</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -171,20 +177,16 @@
     <MESSAGE value="Retransmission seems to be working fine, added args check method to check the input." />
     <MESSAGE value="Read request seems to be working fine. Working on write request." />
     <MESSAGE value="Error packets now do not create new sockets." />
-    <option name="LAST_COMMIT_MESSAGE" value="Error packets now do not create new sockets." />
+    <MESSAGE value="Reading and writing to a file works, still some refactoring needs to be done." />
+    <option name="LAST_COMMIT_MESSAGE" value="Reading and writing to a file works, still some refactoring needs to be done." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/TFTPServer.java</url>
-          <line>335</line>
-          <option name="timeStamp" value="162" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/TFTPServer.java</url>
-          <line>336</line>
-          <option name="timeStamp" value="163" />
+          <line>98</line>
+          <option name="timeStamp" value="167" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
