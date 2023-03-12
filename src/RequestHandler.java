@@ -91,7 +91,7 @@ public class RequestHandler implements Runnable {
           }
         } catch (SocketTimeoutException e) {
           System.out.println("Timeout occurred, retransmitting packet...");
-          retryCount++; // increment retry count
+          retryCount++;
         }
       }
       if (!ackReceived) {
@@ -143,7 +143,7 @@ public class RequestHandler implements Runnable {
         socket.receive(packet);
         InetAddress senderAddress = packet.getAddress();
         int senderPort = packet.getPort();
-        short fetchedBlockNumber = getData(packet);
+        short fetchedBlockNumber = helper.getData(packet);
         System.out.println("Received data packet with block number: " + fetchedBlockNumber);
         if (senderAddress.equals(clientAddress) && senderPort == clientPort && fetchedBlockNumber == blockNumber) {
           int dataLength = packet.getLength() - 4;
@@ -179,15 +179,6 @@ public class RequestHandler implements Runnable {
   }
 
 
-  /**
-   * Extracts the data from the packet
-   * @param data packet
-   * @return data
-   */
-  private short getData(DatagramPacket data) {
-    byte[] buf = data.getData();
-    return (short) ((buf[2] << 8) | (buf[3] & 0xFF));
-  }
 
 
   @Override
