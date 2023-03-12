@@ -14,16 +14,6 @@ public class Server {
   public static final String READDIR = "read/";
   public static final String WRITEDIR = "write/";
 
-  public static final short OP_RRQ = 1;
-  public static final short OP_WRQ = 2;
-  public static final short OP_DAT = 3;
-  public static final short OP_ACK = 4;
-
-  public static final String[] errorCodes = {"Not defined", "File not found.", "Access violation.",
-      "Disk full or allocation exceeded.", "Illegal TFTP operation.",
-      "Unknown transfer ID.", "File already exists.",
-      "No such user."};
-
   /**
    * Main method for the server.
    * Creates the server socket and waits for the client to connect.

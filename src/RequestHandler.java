@@ -24,6 +24,7 @@ public class RequestHandler implements Runnable {
 
   /**
    * Constructor
+   *
    * @param receivePacket packet received from client
    * @param inetSocketAddress socket address of client
    * @param errorHandler error handler
@@ -66,11 +67,12 @@ public class RequestHandler implements Runnable {
       DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, receivePacket.getAddress(), receivePacket.getPort()); // create packet
       boolean ackReceived = false; // flag to check if ack is received
       int retryCount = 0; //
+      int retransmit = 0;
       while (!ackReceived && retryCount < 6) {
         socket.send(response);
         System.out.println("Sending block: " + blockNumber);
         try {
-          socket.setSoTimeout(1); // set timeout to 50ms
+          socket.setSoTimeout(5000);
           DatagramPacket ackPacket = new DatagramPacket(new byte[4], 4); // create ack packet
           socket.receive(ackPacket); // receive ack packet
           if (ackPacket.getData()[0] == 0 && ackPacket.getData()[1] == 4 &&
@@ -79,16 +81,20 @@ public class RequestHandler implements Runnable {
             System.out.println("Received ack for block " + blockNumber);
           } else {
             System.out.println("ACK not received for block " + blockNumber + " ,retransmitting block...");
-            //retryCount++; // increment retry count
+            retransmit++;
+            if (retransmit == 6) {
+              errorHandler.handle(socket, receivePacket, 0);
+              fileInputStream.close();
+              socket.close();
+              return;
+            }
           }
         } catch (SocketTimeoutException e) {
-          // timeout occurred, retransmit the packet
           System.out.println("Timeout occurred, retransmitting packet...");
           retryCount++; // increment retry count
         }
       }
       if (!ackReceived) {
-        // max retries reached, send error packet and return
         errorHandler.handle(socket, receivePacket, 0);
         fileInputStream.close();
         socket.close();
@@ -96,18 +102,19 @@ public class RequestHandler implements Runnable {
       }
       blockNumber++;
     }
-    System.out.println("File transfer complete.\n");
+    System.out.println("Read request completed.\n");
     fileInputStream.close();
     socket.close();
   }
 
   /**
    * Handles the write request
+   *
    * @param socket socket to send and receive packets
    * @param clientAddress client address
    * @param clientPort client port
    */
-  private void handleWriteRequest(DatagramSocket socket, InetAddress clientAddress, int clientPort) {
+  private void handleWriteRequest(DatagramSocket socket, InetAddress clientAddress, int clientPort) throws IOException {
     String fileName = helper.extractFilename(receivePacket);
     String folderName = Server.WRITEDIR;
     File folder = new File(folderName);
@@ -115,6 +122,10 @@ public class RequestHandler implements Runnable {
       folder.mkdir();
     }
     File file = new File(folder, fileName);
+    if (file.exists()) {
+      errorHandler.handle(socket, receivePacket, 6);
+      return;
+    }
     int blockNumber = 1;
     boolean lastBlock = false;
     try (FileOutputStream stream = new FileOutputStream(file)) {
@@ -136,10 +147,11 @@ public class RequestHandler implements Runnable {
         System.out.println("Received data packet with block number: " + fetchedBlockNumber);
         if (senderAddress.equals(clientAddress) && senderPort == clientPort && fetchedBlockNumber == blockNumber) {
           int dataLength = packet.getLength() - 4;
-          stream.write(blockData, 4, dataLength);
-          if (dataLength < 512) {
-            lastBlock = true;
-            System.out.println("Transfer completed");
+          try {
+            stream.write(blockData, 4, dataLength); // TODO: add + 1 to dataLength for exception handling
+          } catch (IndexOutOfBoundsException e) {
+            errorHandler.handle(socket, receivePacket, 2);
+            return;
           }
           byte[] ackData = new byte[4];
           ackData[0] = 0;
@@ -150,6 +162,10 @@ public class RequestHandler implements Runnable {
           socket.send(ackPacket);
           System.out.println("Sent ack for block " + blockNumber);
           blockNumber++;
+          if (dataLength < 512) {
+            lastBlock = true;
+            System.out.println("Write request completed.\n");
+          }
         } else if (fetchedBlockNumber < blockNumber) {
           System.out.println("Received duplicate packet with block number " + fetchedBlockNumber);
         } else {

@@ -48,32 +48,32 @@ public class ErrorHandler {
 
   private void handleFileAlreadyExists(DatagramSocket socket, DatagramPacket packet) throws IOException {
     sendErrorPacket(socket, packet, ERR_EXISTS, "File already exists, cannot be written to.");
-    System.out.println("File already exists, cannot be written to.");
+    System.err.println("File already exists, cannot be written to.");
   }
 
   private void handleLostConnection(DatagramSocket socket, DatagramPacket packet) throws IOException {
     sendErrorPacket(socket, packet, ERR_LOST, "Lost connection during transfer.");
-    System.out.println("Lost connection during transfer.");
+    System.err.println("Lost connection during transfer.");
   }
 
   private void handleAccessViolation(DatagramSocket socket, DatagramPacket packet) throws IOException {
     sendErrorPacket(socket, packet, ERR_ACCESS, "Access violation.");
-    System.out.println("Access violation.");
+    System.err.println("IO error while writing data. Access violation.");
   }
 
   private void handleIllegalTFTPOperation(DatagramSocket socket, DatagramPacket packet) throws IOException {
     sendErrorPacket(socket, packet, 4, "Illegal TFTP operation.");
-    System.out.println("Illegal TFTP operation.");
+    System.err.println("Illegal TFTP operation.");
   }
 
   private void handleUnknownError(DatagramSocket socket, DatagramPacket packet) throws IOException {
     sendErrorPacket(socket, packet, 0, "Unknown error.");
-    System.out.println("Unknown error.");
+    System.err.println("Unknown error.");
   }
 
   private void handleTimeoutError(DatagramSocket socket, DatagramPacket packet) throws IOException {
     sendErrorPacket(socket, packet, OP_ERR, "Timeout error.");
-    System.out.println("Timeout error.");
+    System.err.println("Timeout error.");
   }
 
   public void handle(DatagramSocket socket, DatagramPacket packet, int errorCode) throws IOException {
