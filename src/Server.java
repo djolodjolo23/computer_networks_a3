@@ -18,18 +18,17 @@ public class Server {
   public static final short OP_WRQ = 2;
   public static final short OP_DAT = 3;
   public static final short OP_ACK = 4;
-  public static final short OP_ERR = 5;
-  public static final short ERR_LOST = 0;
-  public static final short ERR_FNF = 1;
-  public static final short ERR_ACCESS = 2;
-  public static final short ERR_EXISTS = 6;
-  public static String mode = "octet";
 
   public static final String[] errorCodes = {"Not defined", "File not found.", "Access violation.",
       "Disk full or allocation exceeded.", "Illegal TFTP operation.",
       "Unknown transfer ID.", "File already exists.",
       "No such user."};
 
+  /**
+   * Main method for the server.
+   * Creates the server socket and waits for the client to connect.
+   * @param args are the program arguments.
+   */
   public static void main(String[] args) {
     argsCheck(args);
     try (DatagramSocket serverSocket = new DatagramSocket(Integer.parseInt(args[0]))) {
@@ -41,17 +40,10 @@ public class Server {
       String path = url.getPath();
       System.out.println("Detailed file path: " + path + "\n");
       while (true) {
-        // client that's accepted
-        // can accept multiple connections since in while(true) loop
         try {
-          //DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-          // connection established
-          // check if all array elements are 0 or not
           DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
           serverSocket.receive(receivePacket);
           receivePacket.setLength(receiveData.length);
-          //if (!isFilledWithZeros(receiveData)) {
-            //serverSocket.receive(new DatagramPacket(receiveData, receiveData.length));
           String request = "";
           if (receivePacket.getData()[1] == 1) {
             request = "READ";
@@ -61,13 +53,12 @@ public class Server {
           }
           System.out.println("Incoming request from " + receivePacket.getAddress() + " on port " + receivePacket.getPort());
           System.out.println("Request type: " + request);
+          ErrorHandler errorHandler = new ErrorHandler();
+          Helper helper = new Helper();
           InetSocketAddress clientAddress = new InetSocketAddress(receivePacket.getAddress(), receivePacket.getPort());
-          RequestHandler requestHandler = new RequestHandler(receivePacket, clientAddress);
+          RequestHandler requestHandler = new RequestHandler(receivePacket, clientAddress, errorHandler, helper);
           Thread thread = new Thread(requestHandler);
           thread.start();
-          //serverSocket.receive(receivePacket);
-          //System.out.println("testing, testing" + receivePacket.getAddress());
-          //thread.join();
         } catch (IOException e) {
           throw new RuntimeException(e);
         }
@@ -78,6 +69,11 @@ public class Server {
   }
 
 
+  /**
+   * Checks if the array is filled with zeros.
+   * @param var0 is the array.
+   * @return true if the array is filled with zeros, false otherwise.
+   */
   static boolean integerCheck(String var0) {
     try {
       Integer.parseInt(var0);
@@ -87,10 +83,22 @@ public class Server {
     }
   }
 
+  /**
+   * Checks if the name of the folder is not restricted.
+   *
+   * @param folderName is the name of the folder.
+   * @return true if the name is not restricted, false otherwise.
+   */
   static boolean checkIfNameIsNotRestricted(String folderName) {
     return !folderName.equals(".idea") && !folderName.equals("out") && !folderName.equals("src");
   }
 
+
+  /**
+   * Checks if the public folder exists.
+   * @param folderName is the name of the folder.
+   * @return true if the folder exists, false otherwise.
+   */
   static boolean checkIfPublicFolderExists(String folderName) {
     boolean exist = false;
     File currentDir = new File(folderName);

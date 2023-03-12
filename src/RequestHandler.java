@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
@@ -16,26 +17,37 @@ public class RequestHandler implements Runnable {
 
   private InetSocketAddress inetSocketAddress;
 
-  private Helper helper;
+  private final Helper helper;
+
+  private final ErrorHandler errorHandler;
 
 
-  public RequestHandler(DatagramPacket receivePacket, InetSocketAddress inetSocketAddress) {
-    helper = new Helper();
+  /**
+   * Constructor
+   * @param receivePacket packet received from client
+   * @param inetSocketAddress socket address of client
+   * @param errorHandler error handler
+   * @param helper helper class
+   */
+  public RequestHandler(DatagramPacket receivePacket, InetSocketAddress inetSocketAddress,
+      ErrorHandler errorHandler, Helper helper) {
+    this.errorHandler = errorHandler;
+    this.helper = helper;
     this.receivePacket = receivePacket;
     this.inetSocketAddress = inetSocketAddress;
   }
 
-  private void handleReadRequest(DatagramSocket socket, DatagramPacket packet) throws IOException {
-    //DatagramSocket socket = new DatagramSocket();
-    String filename = new String(packet.getData(), 2, packet.getLength() - 2);
-    // removing the null bytes
-    int nullIndex = filename.indexOf('\0');
-    if (nullIndex >= 0) {
-      filename = filename.substring(0, nullIndex);
-    }
+  /**
+   * Handles the read request
+   *
+   * @param socket socket to send and receive packets
+   * @throws IOException if an I/O error occurs
+   */
+  private void handleReadRequest(DatagramSocket socket) throws IOException {
+    String filename = helper.extractFilename(receivePacket);
     File file = new File(Server.READDIR + filename);
     if (!file.exists()) {
-      sendErrorPacket(socket, packet, Server.ERR_FNF, "File not found");
+      errorHandler.handle(socket, receivePacket, 1);
       return;
     }
     FileInputStream fileInputStream = new FileInputStream(file);
@@ -51,7 +63,7 @@ public class RequestHandler implements Runnable {
       buffer[1] = 3; // data packet
       buffer[2] = (byte) (blockNumber >> 8); // block number
       buffer[3] = (byte) (blockNumber & 0xFF); // block number
-      DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, packet.getAddress(), packet.getPort()); // create packet
+      DatagramPacket response = new DatagramPacket(buffer, bytesRead + 4, receivePacket.getAddress(), receivePacket.getPort()); // create packet
       boolean ackReceived = false; // flag to check if ack is received
       int retryCount = 0; //
       while (!ackReceived && retryCount < 6) {
@@ -77,7 +89,7 @@ public class RequestHandler implements Runnable {
       }
       if (!ackReceived) {
         // max retries reached, send error packet and return
-        sendErrorPacket(socket, packet, 3, "Timeout occurred during transfer.");
+        errorHandler.handle(socket, receivePacket, 0);
         fileInputStream.close();
         socket.close();
         return;
@@ -89,126 +101,76 @@ public class RequestHandler implements Runnable {
     socket.close();
   }
 
-
-  private void handleWriteRequest(DatagramSocket socket, DatagramPacket packet) throws IOException {
-    String filename = helper.extractFilename(packet);
-    if (filename == null) {
-      sendErrorPacket(socket, packet, Server.ERR_FNF, "Invalid filename.");
-      System.out.println("Invalid filename.");
-      return;
+  /**
+   * Handles the write request
+   * @param socket socket to send and receive packets
+   * @param clientAddress client address
+   * @param clientPort client port
+   */
+  private void handleWriteRequest(DatagramSocket socket, InetAddress clientAddress, int clientPort) {
+    String fileName = helper.extractFilename(receivePacket);
+    String folderName = Server.WRITEDIR;
+    File folder = new File(folderName);
+    if (!folder.exists()) {
+      folder.mkdir();
     }
-    File file = new File(Server.WRITEDIR + filename);
-    if (file.exists()) {
-      sendErrorPacket(socket, packet, Server.ERR_FNF, "File already exists.");
-      System.out.println("File already exists.");
-      return;
+    File file = new File(folder, fileName);
+    int blockNumber = 1;
+    boolean lastBlock = false;
+    try (FileOutputStream stream = new FileOutputStream(file)) {
+      byte[] initialAckData = new byte[4];
+      initialAckData[0] = 0;
+      initialAckData[1] = 4;
+      initialAckData[2] = 0;
+      initialAckData[3] = 0;
+      DatagramPacket initialAckPacket = new DatagramPacket(initialAckData, initialAckData.length, clientAddress, clientPort);
+      socket.send(initialAckPacket);
+      System.out.println("Sent initial ack!");
+      while (!lastBlock) {
+        byte[] blockData = new byte[516];
+        DatagramPacket packet = new DatagramPacket(blockData, blockData.length);
+        socket.receive(packet);
+        InetAddress senderAddress = packet.getAddress();
+        int senderPort = packet.getPort();
+        short fetchedBlockNumber = getData(packet);
+        System.out.println("Received data packet with block number: " + fetchedBlockNumber);
+        if (senderAddress.equals(clientAddress) && senderPort == clientPort && fetchedBlockNumber == blockNumber) {
+          int dataLength = packet.getLength() - 4;
+          stream.write(blockData, 4, dataLength);
+          if (dataLength < 512) {
+            lastBlock = true;
+            System.out.println("Transfer completed");
+          }
+          byte[] ackData = new byte[4];
+          ackData[0] = 0;
+          ackData[1] = 4;
+          ackData[2] = (byte) ((blockNumber >> 8) & 0xFF);
+          ackData[3] = (byte) (blockNumber & 0xFF);
+          DatagramPacket ackPacket = new DatagramPacket(ackData, ackData.length, clientAddress, clientPort);
+          socket.send(ackPacket);
+          System.out.println("Sent ack for block " + blockNumber);
+          blockNumber++;
+        } else if (fetchedBlockNumber < blockNumber) {
+          System.out.println("Received duplicate packet with block number " + fetchedBlockNumber);
+        } else {
+          System.out.println("Received out of order packet with block number " + fetchedBlockNumber);
+          errorHandler.handle(socket, packet, 4);
+        }
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
     }
-    FileOutputStream fileOutputStream = helper.openOutputStream(file);
-    if (fileOutputStream == null) {
-      sendErrorPacket(socket, packet, Server.ERR_FNF, "Could not open file.");
-      System.out.println("Could not open file.");
-      return;
-    }
-    short blockNumber = 0;
-    while (true) {
-      DatagramPacket dataPacket = readAndWriteData(socket, helper.ackPacket(blockNumber++), blockNumber);
-      if (dataPacket == null) {
-        helper.handleIncompleteFile(file, fileOutputStream);
-      }
-      assert dataPacket != null;
-      byte[] data = helper.extractDataFromPacket(dataPacket);
-      if (data == null) {
-        System.err.println("Invalid data packet received. Aborting transfer.");
-        break;
-      }
-      if (!helper.writeDataToFile(data, fileOutputStream)) {
-        System.err.println("Could not write to file. Aborting transfer.");
-        break;
-      }
-      if (helper.isLastPacket(dataPacket)) {  // last packet
-        helper.sendLastAckPacket(socket, blockNumber);
-        System.out.println("All done writing file.");
-        fileOutputStream.close();
-        break;
-      }
-    }
-    helper.closeOutputStream(fileOutputStream);
   }
 
 
+  /**
+   * Extracts the data from the packet
+   * @param data packet
+   * @return data
+   */
   private short getData(DatagramPacket data) {
     byte[] buf = data.getData();
-    short opcode = (short) ((buf[0] << 8) | (buf[1] & 0xFF));
-    if (opcode == Server.OP_ERR) {
-      System.err.println("Client is dead. Closing connection.");
-      parseError(buf);
-      return -1;
-    }
     return (short) ((buf[2] << 8) | (buf[3] & 0xFF));
-  }
-
-  private DatagramPacket readAndWriteData(DatagramSocket socket, DatagramPacket ack, short block) {
-    int retryCount = 0;
-    //byte[] rec = new byte[BUFSIZE];
-    //DatagramPacket receiver = new DatagramPacket(rec, rec.length);
-    while (retryCount < 6) {
-      try {
-        System.out.println("Sending ACK for block: " + block);
-        socket.send(ack);
-        socket.setSoTimeout((int) Math.pow(2, retryCount++) * 1000);
-        byte[] buffer = new byte[Server.BUFSIZE];
-        DatagramPacket dataPacket = new DatagramPacket(buffer, buffer.length);
-        socket.receive(dataPacket);
-        short blockNum = getData(dataPacket);
-        if (blockNum == block) {
-          return dataPacket;
-        } else if (blockNum == -1) {
-          return null;
-        } else {
-          System.out.println("Duplicate ACK received. Retrying...");
-          retryCount = 0;
-        }
-      } catch (SocketTimeoutException e) {
-        System.out.println("Timeout. Retrying...");
-      } catch (IOException e) {
-        System.err.println("IO Error. Aborting transfer.");
-        break;
-      } finally {
-        helper.resetTimeout(socket);
-      }
-    }
-    System.err.println("Max number of retries reached. Aborting transfer.");
-    return null;
-  }
-
-  private void parseError(byte[] data) {
-    ByteBuffer buffer = ByteBuffer.wrap(data);
-    short errCode = buffer.getShort();
-    int msgStart = 4;
-    int msgEnd = msgStart;
-    while (data[msgEnd] != 0) {
-      msgEnd++;
-    }
-    String msg = new String(data, msgStart, msgEnd - msgStart);
-    if (errCode > 7) errCode = 0;
-    System.err.println(Server.errorCodes[errCode] + ": " + msg);
-  }
-
-
-
-
-  private void sendErrorPacket(DatagramSocket socket, DatagramPacket packet, int errorCode, String errorMessage) throws IOException {
-    //DatagramSocket socket = new DatagramSocket();
-    byte[] errorBuffer = new byte[512];
-    errorBuffer[0] = 0;
-    errorBuffer[1] = 5;
-    errorBuffer[2] = 0;
-    errorBuffer[3] = (byte) errorCode;
-    byte[] errorMessageBytes = errorMessage.getBytes();
-    System.arraycopy(errorMessageBytes, 0, errorBuffer, 4, errorMessageBytes.length);
-    errorBuffer[4 + errorMessageBytes.length] = 0;
-    DatagramPacket response = new DatagramPacket(errorBuffer, errorBuffer.length, packet.getAddress(), packet.getPort());
-    socket.send(response);
   }
 
 
@@ -219,17 +181,15 @@ public class RequestHandler implements Runnable {
       socket.connect(inetSocketAddress);
       byte[] buf = receivePacket.getData();
       if (receivePacket.getLength() < 2) {
-        sendErrorPacket(socket, receivePacket, 4, "Illegal TFTP operation.");
+        errorHandler.handle(socket, receivePacket, 4);
       }
       ByteBuffer wrap= ByteBuffer.wrap(buf);
       short opcode = wrap.getShort();
-      //byte[] buffer = new byte[516];
-      //DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
       if (opcode == 1) {
-        handleReadRequest(socket, receivePacket);
+        handleReadRequest(socket);
       }
       if (opcode == 2) {
-        handleWriteRequest(socket, receivePacket);
+        handleWriteRequest(socket, inetSocketAddress.getAddress(), receivePacket.getPort());
       }
     } catch (IOException e) {
       e.printStackTrace();

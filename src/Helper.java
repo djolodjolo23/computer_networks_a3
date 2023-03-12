@@ -38,8 +38,7 @@ public class Helper {
   }
 
   public void handleIncompleteFile(File file, FileOutputStream fileOutputStream) {
-    try {
-      fileOutputStream.close();
+    try (fileOutputStream) {
       System.out.println("Deleting incomplete file.");
       file.delete();
     } catch (IOException e) {
